@@ -1,0 +1,71 @@
+# macOS / Linux / Windows
+.DS_Store
+.AppleDouble
+.LSOverride
+.directory
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Archivos temporales y logs
+*~
+*.swp
+*.swo
+*.bak
+*.tmp
+*.log
+
+# IDEs y contenedores
+.vscode/
+.devcontainer/
+.idea/
+*.user
+*.workspace
+*.suo
+*.sln.docstates
+.clangd/
+.ccls-cache/
+compile_commands.json
+
+# Artefactos de compilación ESP-IDF
+build/
+*/build/
+**/build/
+*.o
+*.a
+*.out
+*.exe
+*.bin
+*.elf
+*.map
+flasher_args.json
+sdkconfig
+sdkconfig.old
+sdkconfig.ci
+
+# CMake y gestores de componentes
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+install_manifest.txt
+CTestTestfile.cmake
+/components/.idf/
+**/components/.idf/
+managed_components/
+.espressif/
+
+# Entornos Python
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.egg-info/
+dist/
+venv/
+.venv/
+env/
+
+# Archivos comprimidos de entrega
+*.zip
+*.tar.gz
+*.7z

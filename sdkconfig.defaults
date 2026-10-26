@@ -1,0 +1,14 @@
+# Tamaño de Flash y tabla de particiones Dual-OTA
+CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+
+# Habilitar Rollback por seguridad ante fallos en el primer arranque tras OTA
+CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE=y
+
+# Bundle de certificados raíz X.509 para descargas HTTPS desde GitHub / ThingsBoard
+CONFIG_MBEDTLS_CERTIFICATE_BUNDLE=y
+CONFIG_MBEDTLS_CERTIFICATE_BUNDLE_DEFAULT_FULL=y
+
+# Permitir HTTP/HTTPS en cliente OTA por si se emplea servidor local en pruebas
+CONFIG_ESP_HTTPS_OTA_ALLOW_HTTP=y

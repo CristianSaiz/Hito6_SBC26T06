@@ -1,0 +1,22 @@
+idf_component_register(
+    SRCS
+        "main.c"
+        "src/wifi_sta.c"
+        "src/ota_manager.c"
+        "src/mqtt_tb.c"
+        "src/time_sync.c"
+    INCLUDE_DIRS
+        "include"
+    REQUIRES
+        nvs_flash
+        esp_netif
+        esp_event
+        esp_wifi
+        mqtt
+        json
+        app_update
+        esp_https_ota
+        esp_http_client
+        mbedtls
+        driver
+)
