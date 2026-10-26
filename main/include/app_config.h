@@ -21,7 +21,7 @@
 // --- Identificación del Firmware Actual ---
 // Al compilar el binario nuevo para subir a GitHub, incrementar a "1.x.0"
 #define FIRMWARE_TITLE              "hito6_sbc26t06"
-#define FIRMWARE_VERSION            "1.8.0"
+#define FIRMWARE_VERSION            "1.9.0"
 
 // URL por defecto del binario en GitHub Releases / Raw (puede sobreescribirse desde ThingsBoard con el atributo compartido 'fw_url')
 #define DEFAULT_OTA_BIN_URL         "https://raw.githubusercontent.com/CristianSaiz/Hito6_SBC26T06/main/ota/hito6_sbc26t06.bin"
