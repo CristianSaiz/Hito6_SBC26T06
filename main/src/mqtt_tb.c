@@ -1,6 +1,7 @@
 #include "mqtt_tb.h"
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "esp_log.h"
 #include "mqtt_client.h"
 #include "esp_ota_ops.h"
@@ -81,7 +82,13 @@ static void parse_firmware_attributes_json(const cJSON *root, bool is_initial_re
         ota_manager_set_target_metadata(ver_str, url_str);
     }
 
-// Requisito 1: Comprobacion automatica al arrancar tras recibir la respuesta inicial de TB
+    // Avisar a la tarea OTA de que la respuesta a su peticion de atributos ya esta guardada.
+    // Se hace DESPUES de set_target_metadata para que lea ya la version nueva.
+    if (is_initial_response) {
+        ota_manager_notify_attrs_received();
+    }
+
+    // Requisito 1: Comprobacion automatica al arrancar tras recibir la respuesta inicial de TB
     if (is_initial_response && !s_initial_boot_check_done) {
         s_initial_boot_check_done = true;
         ota_manager_request_check(OTA_TRIGGER_BOOT, false);
@@ -90,7 +97,7 @@ static void parse_firmware_attributes_json(const cJSON *root, bool is_initial_re
          * ThingsBoard notifica cambios de shared attributes mediante mensajes MQTT Push en tiempo real.
          * Si dejamos activa la llamada directa a ota_manager_request_check(), el ESP32 se actualiza
          * de manera 100% autonoma nada mas guardar en ThingsBoard.
-         * 
+         *
          * Para permitir la evaluacion y auditoria limpia de los requisitos obligatorios de la rubrica:
          * 1. Disparo bajo demanda mediante el boton RPC en el Dashboard (OTA_TRIGGER_RPC_ONDEMAND)
          * 2. Politica de ahorro energetico con comprobacion programada diaria a las 03:00 AM (OTA_TRIGGER_SCHEDULED)

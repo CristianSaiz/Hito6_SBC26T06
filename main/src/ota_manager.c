@@ -20,6 +20,7 @@ static const char *TAG = "OTA_MGR";
 
 static SemaphoreHandle_t s_ota_trigger_sem = NULL;
 static SemaphoreHandle_t s_meta_mutex = NULL;
+static SemaphoreHandle_t s_attr_sem = NULL;   // Se da cuando llegan los atributos pedidos a TB
 
 static char s_target_version[32] = "";
 static char s_target_url[256] = DEFAULT_OTA_BIN_URL;
@@ -92,8 +93,21 @@ void ota_manager_request_check(ota_trigger_source_t source, bool force_check_tb)
     }
 }
 
-static esp_err_t perform_https_ota_download(const char *url, const char *new_ver)
+void ota_manager_notify_attrs_received(void)
 {
+    if (s_attr_sem != NULL) {
+        xSemaphoreGive(s_attr_sem);
+    }
+}
+
+static esp_err_t perform_https_ota_download(const char *base_url, const char *new_ver)
+{
+    // Anadimos ?v=<version> a la URL: la cache de raw.githubusercontent.com va por URL completa,
+    // asi cada version nueva se descarga siempre fresca y no el binario viejo cacheado.
+    char url[300];
+    snprintf(url, sizeof(url), "%s%cv=%s", base_url,
+             strchr(base_url, '?') ? '&' : '?', new_ver);
+
     ESP_LOGI(TAG, "Iniciando descarga HTTPS OTA desde: %s", url);
     mqtt_tb_report_ota_state("DOWNLOADING", new_ver, "Descargando binario desde repositorio");
 
@@ -132,6 +146,15 @@ static esp_err_t perform_https_ota_download(const char *url, const char *new_ver
     ESP_LOGI(TAG, "Cabecera recibida -> Proyecto: %s | Version en binario: %s",
              app_desc.project_name, app_desc.version);
 
+    // Si el binario descargado trae la misma version que el instalado, no tiene sentido
+    // flashear y reiniciar (suele ser cache vieja o un .bin sin actualizar en GitHub).
+    if (strcmp(app_desc.version, FIRMWARE_VERSION) == 0) {
+        ESP_LOGW(TAG, "El binario remoto es la misma version instalada (%s). Abortando.", FIRMWARE_VERSION);
+        esp_https_ota_abort(https_ota_handle);
+        mqtt_tb_report_ota_state("FAILED", new_ver, "El binario remoto no es mas nuevo (revisa el .bin en GitHub)");
+        return ESP_ERR_INVALID_VERSION;
+    }
+
     int total_read = 0;
     int last_logged_kb = 0;
     while (1) {
@@ -164,8 +187,8 @@ static esp_err_t perform_https_ota_download(const char *url, const char *new_ver
         ESP_LOGI(TAG, "OTA completada con exito. Reiniciando en 2 segundos para aplicar v%s...", new_ver);
         vTaskDelay(pdMS_TO_TICKS(2000));
         actuators_update_oled(FIRMWARE_VERSION, "REINICIO", "REBOOTING...");
-    vTaskDelay(pdMS_TO_TICKS(500));
-    esp_restart();
+        vTaskDelay(pdMS_TO_TICKS(500));
+        esp_restart();
     } else {
         if (err == ESP_ERR_OTA_VALIDATE_FAILED) {
             ESP_LOGE(TAG, "Imagen corrupta: fallo de validacion de checksum/firma");
@@ -187,14 +210,20 @@ static void ota_worker_task(void *pvParameters)
             ESP_LOGI(TAG, "=== Comprobacion OTA disparada [Origen: %s] ===", trigger_to_str(s_last_trigger));
 
             if (s_request_tb_sync && mqtt_tb_is_connected()) {
-                // Pedimos los atributos compartidos más recientes a ThingsBoard y damos margen a la respuesta MQTT
+                // Pedimos los atributos compartidos mas recientes y ESPERAMOS la respuesta real
+                // (en vez de un delay fijo, que fallaba con Wi-Fi lento / ahorro de energia).
+                xSemaphoreTake(s_attr_sem, 0);   // limpiar senal antigua
                 mqtt_tb_request_firmware_attributes();
-                vTaskDelay(pdMS_TO_TICKS(1500));
+                if (xSemaphoreTake(s_attr_sem, pdMS_TO_TICKS(5000)) != pdTRUE) {
+                    ESP_LOGW(TAG, "ThingsBoard no respondio con atributos en 5 s. Usando valores en cache.");
+                }
             }
 
             xSemaphoreTake(s_meta_mutex, portMAX_DELAY);
-            strncpy(local_target_ver, s_target_version, sizeof(local_target_ver));
-            strncpy(local_target_url, s_target_url, sizeof(local_target_url));
+            strncpy(local_target_ver, s_target_version, sizeof(local_target_ver) - 1);
+            local_target_ver[sizeof(local_target_ver) - 1] = '\0';
+            strncpy(local_target_url, s_target_url, sizeof(local_target_url) - 1);
+            local_target_url[sizeof(local_target_url) - 1] = '\0';
             xSemaphoreGive(s_meta_mutex);
 
             if (strlen(local_target_ver) == 0) {
@@ -226,8 +255,9 @@ esp_err_t ota_manager_start_task(void)
 
     s_ota_trigger_sem = xSemaphoreCreateBinary();
     s_meta_mutex = xSemaphoreCreateMutex();
+    s_attr_sem = xSemaphoreCreateBinary();
 
-    if (s_ota_trigger_sem == NULL || s_meta_mutex == NULL) {
+    if (s_ota_trigger_sem == NULL || s_meta_mutex == NULL || s_attr_sem == NULL) {
         return ESP_ERR_NO_MEM;
     }
 

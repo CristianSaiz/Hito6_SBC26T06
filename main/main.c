@@ -26,8 +26,7 @@ void app_main(void)
     // 1. Inicializar perifericos locales del entrenador (OLED + 7-Seg + LDR)
     actuators_init();
 
-    // 2. Extraer el digito menor de la version para el display 7-Seg (ej. de '1.5.0' toma el 5)
-    // Extraer la version menor (ej. de '1.5.0' extrae el 5) para el display de 7 segmentos
+    // 2. Extraer la version menor (ej. de '1.5.0' extrae el 5) para el display de 7 segmentos
     int major = 0, minor = 0, patch = 0;
     sscanf(FIRMWARE_VERSION, "%d.%d.%d", &major, &minor, &patch);
     actuators_set_7seg_digit(minor);
@@ -45,7 +44,7 @@ void app_main(void)
     ota_manager_verify_boot_partition(&was_updated);
 
     const esp_partition_t *running = esp_ota_get_running_partition();
-    ESP_LOGI(TAG, "Particion activa en ejecucion: '%s' | Version: %s", 
+    ESP_LOGI(TAG, "Particion activa en ejecucion: '%s' | Version: %s",
              running ? running->label : "desconocida", FIRMWARE_VERSION);
 
     // 5. Refrescar la pantalla OLED con la version y ranura real
@@ -57,10 +56,11 @@ void app_main(void)
     // 7. Sincronizar reloj por SNTP y planificar comprobacion horaria (03:00 AM)
     ESP_ERROR_CHECK(time_sync_and_scheduler_start());
 
-    // 7b. Arrancar la tarea worker del OTA (crea semáforo + tarea)
+    // 7b. Arrancar la tarea worker del OTA (crea semaforos + tarea).
+    //     DEBE ir antes de MQTT: si no, los atributos que llegan no se guardan y el RPC no hace nada.
     ESP_ERROR_CHECK(ota_manager_start_task());
 
-    // 8. Arrancar cliente MQTT ThingsBoard...
+    // 8. Arrancar cliente MQTT ThingsBoard informando si venimos de actualizacion
     ESP_ERROR_CHECK(mqtt_tb_start(was_updated));
 
     ESP_LOGI(TAG, "Sistema completamente operativo y monitorizado.");

@@ -20,6 +20,9 @@ void ota_manager_set_target_metadata(const char *target_version, const char *tar
 // Dispara una comprobación/ejecución de OTA en la tarea dedicada (no bloqueante)
 void ota_manager_request_check(ota_trigger_source_t source, bool force_check_tb);
 
+// Avisa a la tarea OTA de que ya han llegado los atributos compartidos pedidos a ThingsBoard
+void ota_manager_notify_attrs_received(void);
+
 // Inicializa la tarea en segundo plano de gestión OTA
 esp_err_t ota_manager_start_task(void);
 
