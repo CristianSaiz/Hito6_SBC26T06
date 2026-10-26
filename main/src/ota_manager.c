@@ -1,4 +1,5 @@
 #include "ota_manager.h"
+#include "actuators.h"
 #include <string.h>
 #include <stdio.h>
 #include "freertos/FreeRTOS.h"
@@ -162,7 +163,9 @@ static esp_err_t perform_https_ota_download(const char *url, const char *new_ver
         mqtt_tb_report_ota_state("UPDATING", new_ver, "Particion de arranque conmutada. Reiniciando ESP32...");
         ESP_LOGI(TAG, "OTA completada con exito. Reiniciando en 2 segundos para aplicar v%s...", new_ver);
         vTaskDelay(pdMS_TO_TICKS(2000));
-        esp_restart();
+        actuators_update_oled(FIRMWARE_VERSION, "REINICIO", "REBOOTING...");
+    vTaskDelay(pdMS_TO_TICKS(500));
+    esp_restart();
     } else {
         if (err == ESP_ERR_OTA_VALIDATE_FAILED) {
             ESP_LOGE(TAG, "Imagen corrupta: fallo de validacion de checksum/firma");
