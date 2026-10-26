@@ -8,7 +8,7 @@
 
 // --- Configuración de ThingsBoard (MQTT) ---
 #define TB_BROKER_URI               "mqtt://eu.thingsboard.cloud:1883"
-#define TB_DEVICE_TOKEN             "TU_DEVICE_TOKEN_AQUI"
+#define TB_DEVICE_TOKEN             "TU_DEVICE_TOKEN"
 
 // Topics MQTT de ThingsBoard para Telemetría, Atributos y RPC
 #define TB_TELEMETRY_TOPIC          "v1/devices/me/telemetry"
@@ -21,7 +21,7 @@
 // --- Identificación del Firmware Actual ---
 // Al compilar el binario nuevo para subir a GitHub, incrementar a "1.1.0"
 #define FIRMWARE_TITLE              "hito6_sbc26t06"
-#define FIRMWARE_VERSION            "1.1.0"
+#define FIRMWARE_VERSION            "1.2.0"
 
 // URL por defecto del binario en GitHub Releases / Raw (puede sobreescribirse desde ThingsBoard con el atributo compartido 'fw_url')
 #define DEFAULT_OTA_BIN_URL         "https://raw.githubusercontent.com/CristianSaiz/Hito6_SBC26T06/main/ota/hito6_sbc26t06.bin"
