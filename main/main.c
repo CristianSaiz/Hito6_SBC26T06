@@ -57,7 +57,10 @@ void app_main(void)
     // 7. Sincronizar reloj por SNTP y planificar comprobacion horaria (03:00 AM)
     ESP_ERROR_CHECK(time_sync_and_scheduler_start());
 
-    // 8. Arrancar cliente MQTT ThingsBoard informando si venimos de actualizacion
+    // 7b. Arrancar la tarea worker del OTA (crea semáforo + tarea)
+    ESP_ERROR_CHECK(ota_manager_start_task());
+
+    // 8. Arrancar cliente MQTT ThingsBoard...
     ESP_ERROR_CHECK(mqtt_tb_start(was_updated));
 
     ESP_LOGI(TAG, "Sistema completamente operativo y monitorizado.");
