@@ -69,3 +69,5 @@ env/
 *.zip
 *.tar.gz
 *.7z
+
+"!ota/*.bin"
